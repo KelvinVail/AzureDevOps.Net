@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 using CsvHelper;
+using Microsoft.Extensions.Configuration;
 
 namespace AzureDevOps
 {
@@ -18,13 +19,18 @@ namespace AzureDevOps
 
         static async Task Main(string[] args)
         {
+            var config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.Development.json", false)
+                .Build();
+
             _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("basic",
-                "");
+                config.GetSection("DevOpsKey").Value);
             _client.DefaultRequestHeaders.Accept
                 .Add(new MediaTypeWithQualityHeaderValue("*/*"));
 
-            var devOps = new DevOpsClient(_client);
-            await using var writer = new StreamWriter(@"D:\users\Todos.csv");
+
+            var devOps = new DevOpsClient(_client, config.GetSection("Organization").Value);
+            await using var writer = new StreamWriter(@"C:\Users\kelvi\Documents\Todos.csv");
             await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
 
             var repos = await devOps.Repositories();

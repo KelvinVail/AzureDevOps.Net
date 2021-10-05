@@ -10,17 +10,20 @@ namespace AzureDevOps
     public class DevOpsClient
     {
         private readonly HttpClient _client;
-        private const string Organization = "";
+        private readonly string _organization;
 
-        public DevOpsClient(HttpClient client) =>
+        public DevOpsClient(HttpClient client, string organization)
+        {
             _client = client;
+            _organization = organization;
+        }
 
         public async Task<IEnumerable<Project>> Projects()
         {
             var response =
                 await _client.GetAsync(
                     new Uri(
-                        $"https://dev.azure.com/{Organization}/_apis/projects?api-version=6.1-preview.4"));
+                        $"https://dev.azure.com/{_organization}/_apis/projects?api-version=6.1-preview.4"));
 
             var str = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<GetProjectsResponse>(str);
@@ -34,13 +37,13 @@ namespace AzureDevOps
             {
                 uri =
                     new Uri(
-                        $"https://dev.azure.com/{Organization}/_apis/git/repositories?api-version=6.1-preview.1");
+                        $"https://dev.azure.com/{_organization}/_apis/git/repositories?api-version=6.1-preview.1");
             }
             else
             {
                 uri =
                     new Uri(
-                        $"https://dev.azure.com/{Organization}/{projectId}/_apis/git/repositories?api-version=6.1-preview.1");
+                        $"https://dev.azure.com/{_organization}/{projectId}/_apis/git/repositories?api-version=6.1-preview.1");
             }
 
             var response =
@@ -56,7 +59,7 @@ namespace AzureDevOps
             var response =
                 await _client.GetAsync(
                     new Uri(
-                        $"https://dev.azure.com/{Organization}/_apis/git/repositories/{repositoryId}/items?api-version=6.1-preview.1&scopePath={path}&download=true"));
+                        $"https://dev.azure.com/{_organization}/_apis/git/repositories/{repositoryId}/items?api-version=6.1-preview.1&scopePath={path}&download=true"));
 
             return await response.Content.ReadAsStreamAsync();
         }
