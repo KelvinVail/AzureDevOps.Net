@@ -2,7 +2,7 @@
 {
     public class CodeLine
     {
-        public long LineNumber { get; set; }
+        public int LineNumber { get; set; }
 
         public string Line { get; set; }
     }

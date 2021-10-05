@@ -15,7 +15,6 @@ namespace AzureDevOps
     class Program
     {
         private static HttpClient _client = new HttpClient();
-        private static List<SummaryLineOut> _lines = new ();
 
         static async Task Main(string[] args)
         {
@@ -35,6 +34,15 @@ namespace AzureDevOps
 
             var repos = await devOps.Repositories();
 
+            //var lines = await GetSummaryLineOuts(repos);
+            var lines = await GetLineDetails(devOps, repos);
+
+            await csv.WriteRecordsAsync(lines);
+        }
+
+        private static async Task<List<SummaryLineOut>> GetSummaryLineOuts(IEnumerable<Repository> repos)
+        {
+            List<SummaryLineOut> lines = new();
             foreach (var repo in repos)
             {
                 var result = await GetSearchResults(repo.Project.Name, repo.Name);
@@ -46,10 +54,40 @@ namespace AzureDevOps
                     TodoOrHackCommentCount = result.Results.SelectMany(x => x.Matches.Content).Count(),
                 };
 
-                _lines.Add(lineOut);
+                lines.Add(lineOut);
             }
 
-            await csv.WriteRecordsAsync(_lines);
+            return lines;
+        }
+
+        private static async Task<List<LineOut>> GetLineDetails(DevOpsClient devOps, IEnumerable<Repository> repos)
+        {
+            var lines = new List<LineOut>();
+            foreach (var repo in repos)
+            {
+                var result = await GetSearchResults(repo.Project.Name, repo.Name);
+                foreach (var resultResult in result.Results)
+                {
+                    foreach (var match in resultResult.Matches.Content)
+                    {
+                        var itemStream = await devOps.ItemStream(repo.Id, resultResult.Path);
+                        var codeLine = devOps.GetLineCharIsOn(itemStream, match.CharOffset);
+                        var lineOut = new LineOut
+                        {
+                            FileName = resultResult.FileName,
+                            Line = codeLine.Line,
+                            LineNumber = codeLine.LineNumber,
+                            Path = resultResult.Path,
+                            Project = repo.Project.Name,
+                            Repository = repo.Name,
+                        };
+
+                        lines.Add(lineOut);
+                    }
+                }
+            }
+
+            return lines;
         }
 
         private static async Task<Response> GetSearchResults(string projectName, string repoName)
@@ -79,9 +117,9 @@ namespace AzureDevOps
         //    }
         //}
 
-        private static async Task<Response?> Post(string searchText, string projectName, string repoName, int skip, int top)
+        private static async Task<Response> Post(string searchText, string projectName, string repoName, int skip, int top)
         {
-            var requestContent = new StringContent($"{{\"searchText\": \"{searchText}\"," +
+            using var requestContent = new StringContent($"{{\"searchText\": \"{searchText}\"," +
                                                    $"\"$skip\": {skip}," +
                                                    $"\"$top\": {top}," +
                                                    $"\"filters\": {{\"Repository\": [\"{repoName}\"]," +

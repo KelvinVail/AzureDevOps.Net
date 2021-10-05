@@ -64,17 +64,44 @@ namespace AzureDevOps
             return await response.Content.ReadAsStreamAsync();
         }
 
-        public IEnumerable<string> GetLineCharIsOn(Stream stream, long[] charOffsets)
+        public CodeLine GetLineCharIsOn(Stream stream, long charOffset)
         {
-            var reader = new StreamReader(stream);
-            foreach (var charOffset in charOffsets)
+            stream.Position = 0;
+            using var reader = new StreamReader(stream);
+
+            var charsRead = 0;
+            var lineNumber = 0;
+
+            for (int i = 0; i < charOffset; i++)
             {
-                stream.Position = 0;
-                stream.Position = charOffset;
-                yield return reader.ReadLine()?.Trim();
+                reader.Read();
             }
-              
-            reader.Close();
+
+            var line = reader.ReadLine();
+            return new CodeLine { Line = line?.Trim() };
+
+
+            //while (!reader.EndOfStream)
+            //{
+            //    var line = reader.ReadLine();
+            //    var charsOnLine = line?.Length ?? 0;
+            //    lineNumber++;
+
+            //    if (!CharOffsetIsOnThisLine(charOffset, charsRead, charsOnLine))
+            //    {
+            //        charsRead += charsOnLine;
+            //        continue;
+            //    }
+
+            //    return new CodeLine { Line = line?.Trim(), LineNumber = lineNumber };
+            //}
+
+            //return default;
+        }
+
+        private static bool CharOffsetIsOnThisLine(long charOffset, int charsRead, int charsOnLine)
+        {
+            return charOffset > charsRead && charOffset <= charsRead + charsOnLine;
         }
     }
 }
