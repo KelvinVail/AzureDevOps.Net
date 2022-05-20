@@ -14,10 +14,10 @@ namespace AzureDevOps
 
     public class Repository
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("Id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("name")]
+        [JsonPropertyName("Name")]
         public string Name { get; set; }
 
         [JsonPropertyName("url")]

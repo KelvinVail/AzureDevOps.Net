@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31702.278
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32210.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AzureDevOps", "AzureDevOps\AzureDevOps.csproj", "{B1337DE9-F1FF-461A-8F0E-FA2A47753955}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AzureDevOps", "AzureDevOps\AzureDevOps.csproj", "{B1337DE9-F1FF-461A-8F0E-FA2A47753955}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOps", "DevOps\DevOps.csproj", "{A3CB0216-30F7-4717-911B-6CA429981170}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DevOps.Tests", "DevOps.Tests\DevOps.Tests.csproj", "{18FF3575-A2B6-4337-A36E-70AE10C056B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{B1337DE9-F1FF-461A-8F0E-FA2A47753955}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1337DE9-F1FF-461A-8F0E-FA2A47753955}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1337DE9-F1FF-461A-8F0E-FA2A47753955}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3CB0216-30F7-4717-911B-6CA429981170}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3CB0216-30F7-4717-911B-6CA429981170}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3CB0216-30F7-4717-911B-6CA429981170}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3CB0216-30F7-4717-911B-6CA429981170}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18FF3575-A2B6-4337-A36E-70AE10C056B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18FF3575-A2B6-4337-A36E-70AE10C056B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18FF3575-A2B6-4337-A36E-70AE10C056B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18FF3575-A2B6-4337-A36E-70AE10C056B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

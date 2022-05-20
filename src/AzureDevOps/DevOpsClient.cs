@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -11,6 +12,18 @@ namespace AzureDevOps
     {
         private readonly HttpClient _client;
         private readonly string _organization;
+
+        public DevOpsClient(string personalAccessToken, string organization)
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Accept
+                .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("basic",
+                Convert.ToBase64String(
+					System.Text.Encoding.ASCII.GetBytes($":{personalAccessToken}")));
+            _client = client;
+            _organization = organization;
+        }
 
         public DevOpsClient(HttpClient client, string organization)
         {

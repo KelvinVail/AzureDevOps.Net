@@ -50,7 +50,7 @@ namespace AzureDevOps
 
     public class Collection
     {
-        [JsonPropertyName("name")]
+        [JsonPropertyName("Name")]
         public string Name { get; set; }
     }
 

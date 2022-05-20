@@ -6,10 +6,10 @@ namespace AzureDevOps
 {
     public class Project
     {
-        [JsonPropertyName("id")]
+        [JsonPropertyName("Id")]
         public string Id { get; set; }
 
-        [JsonPropertyName("name")]
+        [JsonPropertyName("Name")]
         public string Name { get; set; }
 
         [JsonPropertyName("description")]
