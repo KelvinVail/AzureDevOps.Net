@@ -1,15 +1,18 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Http.Headers;
 using Utf8Json;
 using Utf8Json.Resolvers;
 
 namespace DevOps;
 
-public class Client
+public class Client : IDisposable
 {
-    private HttpClient _client;
     private readonly string _org;
     private readonly string _pat;
+    private readonly HttpClientHandler _clientHandler = new () { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate };
+    private HttpClient _client;
+    private bool _disposedValue;
 
     public Client(string organization, string personalAccessToken)
     {
@@ -20,61 +23,98 @@ public class Client
 
         _org = organization;
         _pat = personalAccessToken;
-        var clientHandler = new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate };
-        _client = new HttpClient(clientHandler);
-        ConfigureClient();
+        _client = ConfigureClient(new HttpClient(_clientHandler));
     }
 
-    public Client With(HttpClient client)
+    public Client With([NotNull]HttpClient client)
     {
-        _client = client;
-        ConfigureClient();
+        _client = ConfigureClient(client);
         return this;
     }
 
-    public async Task<IReadOnlyList<Project>> Projects()
-    {
-        var response = await _client.GetAsync(new Uri($"https://dev.azure.com/{_org}/_apis/projects?api-version=7.1-preview.4"));
-        var result = await JsonSerializer.DeserializeAsync<Response<Project>>(response.Content.ReadAsStream(), StandardResolver.AllowPrivateExcludeNullSnakeCase);
+    public async Task<IReadOnlyList<Project>> Projects() =>
+        await Get<Project>(new Uri("_apis/projects?api-version=7.1-preview.4", UriKind.Relative));
 
-        return result.Value;
+    public async Task<IReadOnlyList<BuildDefinition>> BuildDefinitions([NotNull]Project project) =>
+        await Get<BuildDefinition>(new Uri($"{project.Id}/_apis/build/Definitions", UriKind.Relative));
+
+    public async Task<IReadOnlyList<Build>> Builds([NotNull]Project project, [NotNull]BuildDefinition definition) =>
+        await Get<Build>(new Uri($"{project.Id}/_apis/build/builds?definitions={definition.Id}", UriKind.Relative));
+
+    public async Task<IReadOnlyList<Repository>> Repositories([NotNull]Project project) =>
+        await Get<Repository>(new Uri($"{project.Id}/_apis/git/repositories?api-version=7.1-preview.1", UriKind.Relative));
+
+    public async Task<Commit> LastCommit([NotNull]Project project, [NotNull]Repository repository)
+    {
+        var commit = await Get<Commit>(new Uri(
+            $"{project.Id}/_apis/git/repositories/{repository.Id}/commits?api-version=7.1-preview.1&$top=1",
+            UriKind.Relative));
+
+        if (commit.Count > 0) return commit[0];
+
+        return new Commit();
     }
 
-    public async Task<IReadOnlyList<BuildDefinition>> BuildDefinitions(Project project)
+    public void Dispose()
     {
-        var response = await _client.GetAsync(new Uri($"https://dev.azure.com/{_org}/{project.Id}/_apis/build/Definitions"));
-        try
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposedValue)
+            return;
+
+        if (disposing)
         {
-            var result = await JsonSerializer.DeserializeAsync<Response<BuildDefinition>>(response.Content.ReadAsStream(), StandardResolver.AllowPrivateExcludeNullSnakeCase);
-            return result.Value;
+            _client.Dispose();
+            _clientHandler.Dispose();
         }
-        catch
-        {
-            var str = await response.Content.ReadAsStringAsync();
-            str = str.Replace("\"path\":\"\\\\\",", string.Empty);
-            var result =
-                JsonSerializer.Deserialize<Response<BuildDefinition>>(str,
-                    StandardResolver.AllowPrivateExcludeNullSnakeCase);
 
-            return result.Value;
-        }
+        _disposedValue = true;
     }
 
-    private void ConfigureClient()
-    {
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("basic",
-            Convert.ToBase64String(
-                System.Text.Encoding.ASCII.GetBytes($":{_pat}")));
-        _client.DefaultRequestHeaders.Accept
-            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        _client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
-    }
-
-    private class Response<T>
+    private async Task<IReadOnlyList<T>> Get<T>(Uri requestUri)
         where T : class
     {
-        public int Count { get; set; }
+        var response = await _client.GetAsync(requestUri);
+        try
+        {
+            var result = await JsonSerializer.DeserializeAsync<Response<T>>(
+                response.Content.ReadAsStream(),
+                StandardResolver.AllowPrivateExcludeNullCamelCase);
+            return result.Value;
+        }
+        catch (JsonParsingException)
+        {
+            var str = await response.Content.ReadAsStringAsync();
+            str = str.Replace("\"path\":\"\\\\\",", string.Empty, StringComparison.Ordinal);
+            var result =
+                JsonSerializer.Deserialize<Response<T>>(
+                    str,
+                    StandardResolver.AllowPrivateExcludeNullCamelCase);
 
-        public List<T> Value { get; set; }
+            return result.Value;
+        }
+    }
+
+    private HttpClient ConfigureClient(HttpClient client)
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("basic",
+            Convert.ToBase64String(
+                System.Text.Encoding.ASCII.GetBytes($":{_pat}")));
+        client.DefaultRequestHeaders.Accept
+            .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.AcceptEncoding.Add(new StringWithQualityHeaderValue("gzip"));
+        client.BaseAddress = new Uri($"https://dev.azure.com/{_org}/");
+
+        return client;
+    }
+
+    private sealed class Response<T>
+        where T : class
+    {
+        public List<T> Value { get; private set; } = new ();
     }
 }
