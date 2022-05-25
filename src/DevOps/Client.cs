@@ -44,6 +44,12 @@ public class Client : IDisposable
     public async Task<IReadOnlyList<Repository>> Repositories([NotNull]Project project) =>
         await Get<Repository>(new Uri($"{project.Id}/_apis/git/repositories?api-version=7.1-preview.1", UriKind.Relative));
 
+    public async Task<IReadOnlyList<ReleaseDefinition>> ReleaseDefinitions([NotNull]Project project) =>
+        await Get<ReleaseDefinition>(new Uri($"https://vsrm.dev.azure.com/{_org}/{project.Id}/_apis/release/definitions?api-version=7.1-preview.4"));
+
+    public async Task<IReadOnlyList<Release>> Releases([NotNull]Project project, [NotNull]ReleaseDefinition definition) =>
+        await Get<Release>(new Uri($"https://vsrm.dev.azure.com/{_org}/{project.Id}/_apis/release/releases?api-version=7.1-preview.8&definitionId={definition.Id}"));
+
     public async Task<Commit> LastCommit([NotNull]Project project, [NotNull]Repository repository)
     {
         var commit = await Get<Commit>(new Uri(
