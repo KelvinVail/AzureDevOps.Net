@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using DevOps;
@@ -19,10 +18,23 @@ class Program
             config.GetSection("Organization").Value,
             config.GetSection("DevOpsKey").Value);
 
-        var projects = await devOps.Projects();
+        while (true)
+        {
+            Console.WriteLine("Type 'repos' to list all repos.");
+            Console.WriteLine("Type 'builds' to list latest builds.");
+            Console.WriteLine("Type 'releases' to list latest releases.");
 
-        //await ListRepos(projects, devOps);
-        //await ListBuilds(devOps, projects);
+            var input = Console.ReadLine();
+
+            if (input == "repos") await ListRepos(devOps);
+            if (input == "builds") await ListBuilds(devOps);
+            if (input == "releases") await ListReleases(devOps);
+        }
+    }
+
+    private static async Task ListReleases(Client devOps)
+    {
+        var projects = await devOps.Projects();
         foreach (var project in projects)
         {
             var releaseDefinitions = await devOps.ReleaseDefinitions(project);
@@ -36,8 +48,9 @@ class Program
         }
     }
 
-    private static async Task ListRepos(Client devOps, IReadOnlyList<DevOps.Project> projects)
+    private static async Task ListRepos(Client devOps)
     {
+        var projects = await devOps.Projects();
         foreach (var project in projects)
         {
             var repo = await devOps.Repositories(project);
@@ -50,8 +63,9 @@ class Program
         }
     }
 
-    private static async Task ListBuilds(Client devOps, IReadOnlyList<DevOps.Project> projects)
+    private static async Task ListBuilds(Client devOps)
     {
+        var projects = await devOps.Projects();
         foreach (var project in projects)
         {
             var buildDefs = await devOps.BuildDefinitions(project);
@@ -61,10 +75,6 @@ class Program
                 var latestBuild = builds.OrderByDescending(x => x.StartTime).FirstOrDefault();
                 if (latestBuild != null)
                     Console.WriteLine($"{project.Name}, {latestBuild.Repository.Name}, {buildDefinition.Name}, {latestBuild.StartTime}");
-
-                //foreach (var build in builds)
-                //    Console.WriteLine(
-                //        $"{project.Name}, {build.Repository.Name}, {build.BuildNumber}, {build.StartTime}, {(build.FinishTime - build.StartTime).TotalMinutes}");
             }
         }
     }
