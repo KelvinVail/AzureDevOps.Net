@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace DevOps;
 
-namespace DevOps
+public class Deployment
 {
-    internal class Deployment
-    {
-    }
+    public long Id { get; private set; }
+
+    public DateTime StartedOn { get; private set; }
+
+    public ReleaseDefinition ReleaseDefinition { get; private set; }
+
+    public ReleaseEnvironment ReleaseEnvironment { get; private set; }
 }
